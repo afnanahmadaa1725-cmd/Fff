@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SBAIDR · الإدارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#00c853;--primary-dark:#00962d;--purple:#7c3aed;--purple-light:#a855f7;--fg:#e2e8f0;--dim:rgba(255,255,255,.35);--err:#ef4444;--warn:#f0b429;}
+body{font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#000 0%,#001a0a 40%,#002d14 70%,#001508 100%);color:var(--fg);min-height:100vh;position:relative}
+.orb{position:fixed;border-radius:50%;filter:blur(110px);opacity:.22;pointer-events:none}
+.orb1{width:500px;height:500px;background:radial-gradient(circle,#00c853,#004d20);top:-150px;right:-150px}
+.orb2{width:400px;height:400px;background:radial-gradient(circle,#7c3aed,#3b0764);bottom:-100px;left:-100px}
+.wrap{position:relative;z-index:10;max-width:1000px;margin:0 auto;padding:30px 20px}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;flex-wrap:wrap;gap:10px}
+.head h1{font-family:'Orbitron',sans-serif;font-size:1.3rem;letter-spacing:2px;background:linear-gradient(135deg,var(--primary),#4ade80,var(--purple-light));-webkit-background-clip:text;background-clip:text;color:transparent}
+.head .actions{display:flex;gap:10px}
+.head a{text-decoration:none;padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s}
+.head a.back{background:rgba(0,200,83,.08);color:var(--primary);border:1px solid rgba(0,200,83,.25)}
+.head a.back:hover{background:rgba(0,200,83,.15)}
+.head a.out{background:rgba(239,68,68,.08);color:var(--err);border:1px solid rgba(239,68,68,.25)}
+.head a.out:hover{background:rgba(239,68,68,.15)}
+.card{background:rgba(0,10,5,.85);backdrop-filter:blur(20px);border:1px solid rgba(0,255,136,.15);border-radius:16px;padding:20px;margin-bottom:20px}
+.card h2{font-size:.95rem;margin-bottom:16px;color:var(--primary);display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,136,.1)}
+.card h2 .badge{background:rgba(0,200,83,.15);color:var(--primary);border-radius:10px;padding:1px 8px;font-size:.72rem;font-weight:700}
+.user-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:10px;margin-bottom:8px;background:rgba(0,0,0,.3);border:1px solid rgba(0,200,83,.1);transition:all .2s;gap:10px;flex-wrap:wrap}
+.user-row:hover{background:rgba(0,200,83,.04);border-color:rgba(0,200,83,.2)}
+.user-info{display:flex;flex-direction:column;gap:3px}
+.user-info .name{font-weight:700;color:var(--fg)}
+.user-info .meta{font-size:.72rem;color:var(--dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status{font-size:.68rem;padding:2px 8px;border-radius:8px;font-weight:600}
+.status.pending{background:rgba(240,180,41,.15);color:var(--warn)}
+.status.approved{background:rgba(0,200,83,.15);color:var(--primary)}
+.status.rejected{background:rgba(239,68,68,.15);color:var(--err)}
+.user-actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{padding:6px 12px;border-radius:6px;font:inherit;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid;background:transparent;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn.approve{color:var(--primary);border-color:rgba(0,200,83,.35);background:rgba(0,200,83,.08)}
+.btn.approve:hover{background:var(--primary);color:#000}
+.btn.reject{color:var(--warn);border-color:rgba(240,180,41,.35);background:rgba(240,180,41,.08)}
+.btn.reject:hover{background:var(--warn);color:#000}
+.btn.delete{color:var(--err);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+.btn.delete:hover{background:var(--err);color:#fff}
+.empty{text-align:center;padding:30px;color:var(--dim);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="wrap">
+  <div class="head">
+    <h1>لوحة الإدارة</h1>
+    <div class="actions">
+      <a href="/forge" class="back"><i class="fas fa-robot"></i> البوت</a>
+      <a href="/api/logout" class="out"><i class="fas fa-sign-out-alt"></i> خروج</a>
+    </div>
+  </div>
+  <div class="card">
+    <h2><i class="fas fa-hourglass-half"></i> بانتظار الموافقة <span class="badge" id="pendingCount">0</span></h2>
+    <div id="pending"></div>
+  </div>
+  <div class="card">
+    <h2><i class="fas fa-users"></i> جميع المستخدمين <span class="badge" id="allCount">0</span></h2>
+    <div id="all"></div>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+function escapeHtml(s){return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtDate(ts){const d = new Date(ts * 1000);return d.toLocaleDateString('ar') + ' ' + d.toLocaleTimeString('ar', {hour:'2-digit', minute:'2-digit'});}
+function statusLabel(s){return {pending:'قيد المراجعة', approved:'مقبول', rejected:'مرفوض'}[s] || s;}
+async function load() { const r = await fetch('/api/admin/users'); if (r.status === 403) return location.href = '/login'; const data = await r.json(); render(data.pending, data.all); }
+function render(pending, all) {
+  $('pendingCount').textContent = pending.length; $('allCount').textContent = all.length;
+  const pBox = $('pending'); pBox.innerHTML = pending.length ? '' : '<div class="empty">لا يوجد طلبات جديدة</div>';
+  for (const u of pending) pBox.appendChild(row(u, true));
+  const aBox = $('all'); aBox.innerHTML = all.length ? '' : '<div class="empty">لا يوجد مستخدمون</div>';
+  for (const u of all) aBox.appendChild(row(u, false));
+}
+function row(u, isPending) {
+  const d = document.createElement('div'); d.className = 'user-row';
+  d.innerHTML = `<div class="user-info"><span class="name">${escapeHtml(u.username)}</span><span class="meta"><span class="status ${u.status}">${statusLabel(u.status)}</span><span>${fmtDate(u.created)}</span></span></div><div class="user-actions">${u.status !== 'approved' ? `<button class="btn approve" data-uid="${u.id}" data-act="approve"><i class="fas fa-check"></i> قبول</button>` : ''}${u.status !== 'rejected' ? `<button class="btn reject" data-uid="${u.id}" data-act="reject"><i class="fas fa-times"></i> رفض</button>` : ''}<button class="btn delete" data-uid="${u.id}" data-act="delete"><i class="fas fa-trash"></i> حذف</button></div>`;
+  d.querySelectorAll('button').forEach(b => { b.onclick = () => act(b.dataset.uid, b.dataset.act); }); return d;
+}
+async function act(uid, action) {
+  if (action === 'delete') { if (!confirm('حذف هذا المستخدم نهائيًا؟ سيتم حذف كل جلساته وملفاته.')) return; const r = await fetch(`/api/admin/user/${uid}`, {method:'DELETE'}); if (!r.ok) { const e = await r.json(); alert(e.detail || 'خطأ'); } }
+  else { const r = await fetch(`/api/admin/${action}/${uid}`, {method:'POST'}); if (!r.ok) { const e = await r.json(); alert(e.detail || 'خطأ'); } }
+  await load();
+}
+load();
+</script>
+</body>
+</html>
